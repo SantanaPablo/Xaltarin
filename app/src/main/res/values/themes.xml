@@ -1,0 +1,4 @@
+<resources>
+
+    <style name="Theme.Saltarin" parent="Theme.AppCompat.DayNight.NoActionBar" />
+</resources>
