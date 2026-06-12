@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.perromono.saltarin">
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -14,19 +15,27 @@
     <application
         android:name=".SaltarinApp"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/saltarin_launcher"
+        android:roundIcon="@mipmap/saltarin_launcher_round"
         android:label="Saltarin"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+        android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+        tools:replace="android:icon,android:roundIcon,android:label,android:theme">
+
+        <!-- ELIMINAR LA ACTIVITY LAUNCHER DE ICS -->
+        <activity
+            android:name="de.blinkt.openvpn.MainActivity"
+            tools:node="remove" />
 
         <activity
             android:name=".MainActivity"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
 
         <service
@@ -39,9 +48,11 @@
             android:exported="false"
             android:permission="android.permission.BIND_VPN_SERVICE"
             android:foregroundServiceType="connectedDevice">
+
             <intent-filter>
                 <action android:name="android.net.VpnService" />
             </intent-filter>
+
         </service>
 
         <service
@@ -53,10 +64,13 @@
             android:name="de.blinkt.openvpn.api.ExternalOpenVPNService"
             android:exported="true"
             android:permission="de.blinkt.openvpn.API_SERVICE">
+
             <intent-filter>
                 <action android:name="de.blinkt.openvpn.api.IOpenVPNAPIService" />
             </intent-filter>
+
         </service>
 
     </application>
+
 </manifest>

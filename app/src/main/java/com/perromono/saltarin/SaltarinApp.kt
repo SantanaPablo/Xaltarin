@@ -11,7 +11,6 @@ class SaltarinApp : Application() {
         GlobalPreferences.setInstance(false, false, false)
         crearCanalesNotificacion()
     }
-gh auth login
     private fun crearCanalesNotificacion() {
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
