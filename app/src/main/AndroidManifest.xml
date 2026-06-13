@@ -12,6 +12,13 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
     <application
         android:name=".SaltarinApp"
         android:allowBackup="true"
@@ -22,7 +29,6 @@
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
         tools:replace="android:icon,android:roundIcon,android:label,android:theme">
 
-        <!-- ELIMINAR LA ACTIVITY LAUNCHER DE ICS -->
         <activity
             android:name="de.blinkt.openvpn.MainActivity"
             tools:node="remove" />
@@ -30,12 +36,11 @@
         <activity
             android:name=".MainActivity"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
-
         </activity>
 
         <service
@@ -48,11 +53,9 @@
             android:exported="false"
             android:permission="android.permission.BIND_VPN_SERVICE"
             android:foregroundServiceType="connectedDevice">
-
             <intent-filter>
                 <action android:name="android.net.VpnService" />
             </intent-filter>
-
         </service>
 
         <service
@@ -64,13 +67,10 @@
             android:name="de.blinkt.openvpn.api.ExternalOpenVPNService"
             android:exported="true"
             android:permission="de.blinkt.openvpn.API_SERVICE">
-
             <intent-filter>
                 <action android:name="de.blinkt.openvpn.api.IOpenVPNAPIService" />
             </intent-filter>
-
         </service>
 
     </application>
-
 </manifest>
