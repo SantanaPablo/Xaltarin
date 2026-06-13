@@ -13,13 +13,13 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -30,23 +30,22 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.perromono.saltarin.ui.theme.*
 import de.blinkt.openvpn.VpnProfile
 import de.blinkt.openvpn.core.ConfigParser
 import de.blinkt.openvpn.core.ProfileManager
@@ -65,16 +64,13 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var prefs: SharedPreferences
 
-    // Variables de estado pendientes
     private var appPendiente = ""
     private var segundosPendientes = 0L
     private var vpnYaConectada = false
 
-    // Estado reactivo para el spinner de carga
     private var isConnecting = mutableStateOf(false)
 
     private val vpnListener = object : de.blinkt.openvpn.core.VpnStatus.StateListener {
-
         override fun updateState(
             state: String?,
             logmessage: String?,
@@ -83,33 +79,27 @@ class MainActivity : ComponentActivity() {
             intent: Intent?
         ) {
             android.util.Log.d("SALTARIN_VPN", "Estado: $state | Nivel: $level")
-
             when (level) {
                 de.blinkt.openvpn.core.ConnectionStatus.LEVEL_CONNECTED -> {
                     if (vpnYaConectada) return
                     vpnYaConectada = true
-
-                    android.util.Log.d("SALTARIN_VPN", "¡CONEXIÓN ESTABLECIDA!")
-
                     runOnUiThread {
-                        isConnecting.value = false // Apaga el spinner
+                        isConnecting.value = false
                         toast("VPN CONECTADA")
                         abrirAplicacion(appPendiente)
                         iniciarTemporizador(segundosPendientes)
                     }
                 }
-
                 de.blinkt.openvpn.core.ConnectionStatus.LEVEL_AUTH_FAILED -> {
                     runOnUiThread {
-                        isConnecting.value = false // Apaga el spinner
+                        isConnecting.value = false
                         toast("Error de autenticación VPN. Revisá usuario/clave.")
                     }
                 }
-
                 de.blinkt.openvpn.core.ConnectionStatus.LEVEL_NOTCONNECTED -> {
                     if (state != "NOPROCESS") {
                         runOnUiThread {
-                            isConnecting.value = false // Apaga el spinner
+                            isConnecting.value = false
                             toast("VPN desconectada")
                         }
                     }
@@ -117,7 +107,6 @@ class MainActivity : ComponentActivity() {
                 else -> {}
             }
         }
-
         override fun setConnectedVPN(uuid: String?) {}
     }
 
@@ -126,38 +115,30 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         prefs = getSharedPreferences("saltarin_prefs", MODE_PRIVATE)
 
-        val lightBlueScheme = lightColorScheme(
-            primary = Color(0xFF1976D2),
-            onPrimary = Color.White,
-            primaryContainer = Color(0xFFBBDEFB),
-            onPrimaryContainer = Color(0xFF001E3C),
-            background = Color(0xFFF5F9FF),
-            surface = Color.White,
-            onSurfaceVariant = Color(0xFF5E6A75)
-        )
-
-        val darkBlueScheme = darkColorScheme(
-            primary = Color(0xFF64B5F6),
-            onPrimary = Color(0xFF00325A),
-            primaryContainer = Color(0xFF00497D),
-            onPrimaryContainer = Color(0xFFD1E4FF),
-            background = Color(0xFF121212),
-            surface = Color(0xFF1E1E1E),
-            onSurfaceVariant = Color(0xFFAFC0C9)
-        )
-
         setContent {
-            val useDarkTheme = isSystemInDarkTheme()
-            val colors = if (useDarkTheme) darkBlueScheme else lightBlueScheme
-
-            MaterialTheme(colorScheme = colors) {
+            MaterialTheme(colorScheme = XaltarinColorScheme) {
                 Scaffold(
                     topBar = {
                         TopAppBar(
-                            title = { Text("Xaltarin", fontWeight = FontWeight.Bold) },
+                            title = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Image(
+                                        painter = painterResource(id = R.mipmap.saltarin_launcher),
+                                        contentDescription = "Logo Xaltarin",
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        "Xaltarin",
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = White,
+                                        fontSize = 20.sp,
+                                        letterSpacing = 0.5.sp
+                                    )
+                                }
+                            },
                             colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                containerColor = Surface1
                             )
                         )
                     }
@@ -175,10 +156,58 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // ── Helpers de estilo reutilizables ──────────────────────────────────────
+
+    @Composable
+    private fun XCard(content: @Composable ColumnScope.() -> Unit) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Surface1),
+            border = BorderStroke(1.dp, Outline)
+        ) {
+            Column(modifier = Modifier.padding(20.dp), content = content)
+        }
+    }
+
+    @Composable
+    private fun SectionTitle(text: String) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .width(3.dp)
+                    .height(18.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(BlueVibrant)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = White
+            )
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+
+    @Composable
+    private fun xTextFieldColors() = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor      = BlueVibrant,
+        unfocusedBorderColor    = Outline,
+        focusedLabelColor       = BlueVibrant,
+        unfocusedLabelColor     = TextMuted,
+        cursorColor             = BlueVibrant,
+        focusedTextColor        = White,
+        unfocusedTextColor      = White,
+        focusedContainerColor   = Surface2,
+        unfocusedContainerColor = Surface2
+    )
+
+    // ─────────────────────────────────────────────────────────────────────────
+
     @Composable
     fun PantallaPrincipal() {
-        val context = LocalContext.current
-
         var selectedFileUri by remember {
             mutableStateOf(prefs.getString("last_ovpn_uri", null)?.let { Uri.parse(it) })
         }
@@ -197,13 +226,12 @@ class MainActivity : ComponentActivity() {
         var seconds by remember { mutableStateOf(prefs.getString("last_seconds", "30") ?: "30") }
         var showAppPicker by remember { mutableStateOf(false) }
 
-        // FocusRequesters para navegación TV
-        val focusOvpn = remember { FocusRequester() }
-        val focusUser = remember { FocusRequester() }
-        val focusPass = remember { FocusRequester() }
+        val focusOvpn      = remember { FocusRequester() }
+        val focusUser      = remember { FocusRequester() }
+        val focusPass      = remember { FocusRequester() }
         val focusAppPicker = remember { FocusRequester() }
-        val focusSeconds = remember { FocusRequester() }
-        val focusBoton = remember { FocusRequester() }
+        val focusSeconds   = remember { FocusRequester() }
+        val focusBoton     = remember { FocusRequester() }
 
         val filePickerLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent()
@@ -219,285 +247,289 @@ class MainActivity : ComponentActivity() {
             )
         }
 
-        // Helper para que D-PAD arriba/abajo navegue entre campos
         fun Modifier.tvNav(onUp: (() -> Unit)? = null, onDown: (() -> Unit)? = null): Modifier =
             this.onPreviewKeyEvent { event ->
                 if (event.nativeKeyEvent.action != android.view.KeyEvent.ACTION_DOWN) return@onPreviewKeyEvent false
                 when (event.nativeKeyEvent.keyCode) {
-                    android.view.KeyEvent.KEYCODE_DPAD_UP -> {
-                        onUp?.invoke(); onUp != null
-                    }
-                    android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
-                        onDown?.invoke(); onDown != null
-                    }
+                    android.view.KeyEvent.KEYCODE_DPAD_UP   -> { onUp?.invoke(); onUp != null }
+                    android.view.KeyEvent.KEYCODE_DPAD_DOWN -> { onDown?.invoke(); onDown != null }
                     else -> false
                 }
             }
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(vertical = 20.dp)
         ) {
-            // TARJETA 1: PERFIL VPN
+            // ── TARJETA 1: PERFIL VPN ──────────────────────────────────────
             item {
-                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Perfil VPN",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
+                XCard {
+                    SectionTitle("Perfil VPN")
 
-                        // Botón seleccionar OVPN
-                        var ovpnFocused by remember { mutableStateOf(false) }
-                        OutlinedButton(
-                            onClick = { filePickerLauncher.launch("*/*") },
+                    var ovpnFocused by remember { mutableStateOf(false) }
+                    Button(
+                        onClick = { filePickerLauncher.launch("*/*") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusOvpn)
+                            .onFocusChanged { ovpnFocused = it.isFocused }
+                            .tvNav(onDown = { try { focusUser.requestFocus() } catch (_: Exception) {} }),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (ovpnFocused) BlueVibrant else BlueDeep
+                        )
+                    ) {
+                        Text(
+                            "Seleccionar archivo .ovpn",
+                            color = White,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Text(
+                        text = selectedFileName,
+                        fontSize = 12.sp,
+                        color = if (selectedFileUri != null) BlueLuminous else TextMuted,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = vpnUser,
+                        onValueChange = { vpnUser = it },
+                        label = { Text("Usuario VPN (Opcional)") },
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = TextMuted) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = {
+                            try { focusPass.requestFocus() } catch (_: Exception) {}
+                        }),
+                        colors = xTextFieldColors(),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp)
+                            .focusRequester(focusUser)
+                            .tvNav(
+                                onUp   = { try { focusOvpn.requestFocus() } catch (_: Exception) {} },
+                                onDown = { try { focusPass.requestFocus() } catch (_: Exception) {} }
+                            )
+                    )
+
+                    OutlinedTextField(
+                        value = vpnPass,
+                        onValueChange = { vpnPass = it },
+                        label = { Text("Contraseña VPN (Opcional)") },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = TextMuted) },
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(onNext = {
+                            try { focusAppPicker.requestFocus() } catch (_: Exception) {}
+                        }),
+                        colors = xTextFieldColors(),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusPass)
+                            .tvNav(
+                                onUp   = { try { focusUser.requestFocus() } catch (_: Exception) {} },
+                                onDown = { try { focusAppPicker.requestFocus() } catch (_: Exception) {} }
+                            )
+                    )
+                }
+            }
+
+            // ── TARJETA 2: APP Y TIEMPO ────────────────────────────────────
+            item {
+                XCard {
+                    SectionTitle("App y tiempo")
+
+                    var appFocused by remember { mutableStateOf(false) }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (appFocused)
+                                    Brush.linearGradient(
+                                        listOf(BlueDeep, BlueVibrant.copy(alpha = 0.4f))
+                                    )
+                                else
+                                    Brush.linearGradient(listOf(Surface2, Surface2))
+                            )
+                            .focusRequester(focusAppPicker)
+                            .onFocusChanged { appFocused = it.isFocused }
+                            .focusable()
+                            .onPreviewKeyEvent { event ->
+                                if (event.nativeKeyEvent.action != android.view.KeyEvent.ACTION_DOWN) return@onPreviewKeyEvent false
+                                when (event.nativeKeyEvent.keyCode) {
+                                    android.view.KeyEvent.KEYCODE_DPAD_CENTER,
+                                    android.view.KeyEvent.KEYCODE_ENTER,
+                                    android.view.KeyEvent.KEYCODE_BUTTON_A -> { showAppPicker = true; true }
+                                    android.view.KeyEvent.KEYCODE_DPAD_UP -> {
+                                        try { focusPass.requestFocus() } catch (_: Exception) {}; true
+                                    }
+                                    android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
+                                        try { focusSeconds.requestFocus() } catch (_: Exception) {}; true
+                                    }
+                                    else -> false
+                                }
+                            }
+                            .clickable { showAppPicker = true }
+                    ) {
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .focusRequester(focusOvpn)
-                                .onFocusChanged { ovpnFocused = it.isFocused }
-                                .tvNav(
-                                    onDown = { try { focusUser.requestFocus() } catch (_: Exception) {} }
-                                ),
-                            border = BorderStroke(
-                                if (ovpnFocused) 3.dp else 1.dp,
-                                if (ovpnFocused) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.outline
-                            )
-                        ) {
-                            Text("Seleccionar archivo .ovpn")
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                                .padding(16.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = selectedFileName,
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.weight(1f)
-                            )
-                            TextButton(onClick = {
-                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.vpnbook.com/")))
-                            }) {
-                                Text("Conseguir .ovpn", fontSize = 12.sp, textDecoration = TextDecoration.Underline)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Usuario
-                        OutlinedTextField(
-                            value = vpnUser,
-                            onValueChange = { vpnUser = it },
-                            label = { Text("Usuario VPN (Opcional)") },
-                            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                            keyboardActions = KeyboardActions(onNext = {
-                                try { focusPass.requestFocus() } catch (_: Exception) {}
-                            }),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 8.dp)
-                                .focusRequester(focusUser)
-                                .tvNav(
-                                    onUp = { try { focusOvpn.requestFocus() } catch (_: Exception) {} },
-                                    onDown = { try { focusPass.requestFocus() } catch (_: Exception) {} }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = selectedApp?.name ?: "Elegir aplicación",
+                                    color = if (selectedApp != null) White else TextMuted,
+                                    fontWeight = if (selectedApp != null) FontWeight.Medium else FontWeight.Normal
                                 )
-                        )
-
-                        // Contraseña
-                        OutlinedTextField(
-                            value = vpnPass,
-                            onValueChange = { vpnPass = it },
-                            label = { Text("Contraseña VPN (Opcional)") },
-                            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
-                            visualTransformation = PasswordVisualTransformation(),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Password,
-                                imeAction = ImeAction.Next
-                            ),
-                            keyboardActions = KeyboardActions(onNext = {
-                                try { focusAppPicker.requestFocus() } catch (_: Exception) {}
-                            }),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .focusRequester(focusPass)
-                                .tvNav(
-                                    onUp = { try { focusUser.requestFocus() } catch (_: Exception) {} },
-                                    onDown = { try { focusAppPicker.requestFocus() } catch (_: Exception) {} }
-                                )
-                        )
-                    }
-                }
-            }
-
-            // TARJETA 2: APP Y TIEMPO
-            item {
-                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "App y tiempo",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
-
-                        // Selector de app
-                        var appFocused by remember { mutableStateOf(false) }
-                        OutlinedCard(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 16.dp)
-                                .focusRequester(focusAppPicker)
-                                .onFocusChanged { appFocused = it.isFocused }
-                                .focusable()
-                                .onPreviewKeyEvent { event ->
-                                    if (event.nativeKeyEvent.action != android.view.KeyEvent.ACTION_DOWN) return@onPreviewKeyEvent false
-                                    when (event.nativeKeyEvent.keyCode) {
-                                        android.view.KeyEvent.KEYCODE_DPAD_CENTER,
-                                        android.view.KeyEvent.KEYCODE_ENTER,
-                                        android.view.KeyEvent.KEYCODE_BUTTON_A -> {
-                                            showAppPicker = true; true
-                                        }
-                                        android.view.KeyEvent.KEYCODE_DPAD_UP -> {
-                                            try { focusPass.requestFocus() } catch (_: Exception) {}; true
-                                        }
-                                        android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
-                                            try { focusSeconds.requestFocus() } catch (_: Exception) {}; true
-                                        }
-                                        else -> false
-                                    }
-                                }
-                                .clickable { showAppPicker = true },
-                            border = BorderStroke(
-                                if (appFocused) 3.dp else 1.dp,
-                                if (appFocused) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.outline
-                            ),
-                            colors = CardDefaults.outlinedCardColors(
-                                containerColor = if (appFocused)
-                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                                else MaterialTheme.colorScheme.surface
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
+                                if (selectedApp != null) {
                                     Text(
-                                        text = selectedApp?.name ?: "Elegir aplicación",
-                                        fontWeight = if (selectedApp != null) FontWeight.Medium else FontWeight.Normal
+                                        text = selectedApp!!.packageName,
+                                        fontSize = 12.sp,
+                                        color = TextMuted
                                     )
-                                    if (selectedApp != null) {
-                                        Text(
-                                            text = selectedApp!!.packageName,
-                                            fontSize = 12.sp,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
                                 }
-                                Icon(Icons.Default.Search, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             }
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = null,
+                                tint = if (appFocused) BlueVibrant else TextMuted
+                            )
                         }
-
-                        // Segundos
-                        OutlinedTextField(
-                            value = seconds,
-                            onValueChange = { seconds = it },
-                            label = { Text("Tiempo activo") },
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                imeAction = ImeAction.Done
-                            ),
-                            keyboardActions = KeyboardActions(onDone = {
-                                try { focusBoton.requestFocus() } catch (_: Exception) {}
-                            }),
-                            suffix = { Text("segundos") },
-                            singleLine = true,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .focusRequester(focusSeconds)
-                                .tvNav(
-                                    onUp = { try { focusAppPicker.requestFocus() } catch (_: Exception) {} },
-                                    onDown = { try { focusBoton.requestFocus() } catch (_: Exception) {} }
-                                )
-                        )
                     }
+
+                    OutlinedTextField(
+                        value = seconds,
+                        onValueChange = { seconds = it },
+                        label = { Text("Tiempo activo") },
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(onDone = {
+                            try { focusBoton.requestFocus() } catch (_: Exception) {}
+                        }),
+                        suffix = { Text("seg", color = TextMuted) },
+                        singleLine = true,
+                        colors = xTextFieldColors(),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusSeconds)
+                            .tvNav(
+                                onUp   = { try { focusAppPicker.requestFocus() } catch (_: Exception) {} },
+                                onDown = { try { focusBoton.requestFocus() } catch (_: Exception) {} }
+                            )
+                    )
                 }
             }
 
-            // BOTÓN CONECTAR
+            // ── BOTÓN CONECTAR ─────────────────────────────────────────────
             item {
                 var botonFocused by remember { mutableStateOf(false) }
-                Button(
-                    onClick = {
-                        val secs = seconds.toLongOrNull()
-                        when {
-                            selectedFileUri == null -> toast("Seleccioná un archivo .ovpn primero")
-                            selectedApp == null -> toast("Elegí una aplicación")
-                            secs == null || secs <= 0 -> toast("Ingresá un tiempo válido")
-                            else -> {
-                                isConnecting.value = true
-                                prefs.edit()
-                                    .putString("last_ovpn_uri", selectedFileUri.toString())
-                                    .putString("last_ovpn_name", selectedFileName)
-                                    .putString("last_vpn_user", vpnUser)
-                                    .putString("last_vpn_pass", vpnPass)
-                                    .putString("last_app_package", selectedApp!!.packageName)
-                                    .putString("last_app_name", selectedApp!!.name)
-                                    .putString("last_seconds", seconds)
-                                    .apply()
-                                prepararConexion(selectedFileUri!!, selectedApp!!.packageName, secs, vpnUser, vpnPass)
-                            }
-                        }
-                    },
+                val canConnect = selectedFileUri != null && selectedApp != null && !isConnecting.value
+
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(
+                            if (canConnect)
+                                Brush.linearGradient(
+                                    if (botonFocused)
+                                        listOf(BlueVibrant, BlueLuminous)
+                                    else
+                                        listOf(BlueDeep, BlueVibrant)
+                                )
+                            else
+                                Brush.linearGradient(listOf(Surface2, Surface2))
+                        )
                         .focusRequester(focusBoton)
                         .onFocusChanged { botonFocused = it.isFocused }
-                        .tvNav(
-                            onUp = { try { focusSeconds.requestFocus() } catch (_: Exception) {} }
-                        ),
-                    enabled = selectedFileUri != null && selectedApp != null && !isConnecting.value,
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = if (botonFocused) 8.dp else 2.dp
-                    )
+                        .focusable()
+                        .onPreviewKeyEvent { event ->
+                            if (event.nativeKeyEvent.action != android.view.KeyEvent.ACTION_DOWN) return@onPreviewKeyEvent false
+                            when (event.nativeKeyEvent.keyCode) {
+                                android.view.KeyEvent.KEYCODE_DPAD_UP -> {
+                                    try { focusSeconds.requestFocus() } catch (_: Exception) {}; true
+                                }
+                                else -> false
+                            }
+                        }
+                        .clickable(enabled = canConnect) {
+                            val secs = seconds.toLongOrNull()
+                            when {
+                                selectedFileUri == null    -> toast("Seleccioná un archivo .ovpn primero")
+                                selectedApp == null        -> toast("Elegí una aplicación")
+                                secs == null || secs <= 0 -> toast("Ingresá un tiempo válido")
+                                else -> {
+                                    isConnecting.value = true
+                                    prefs.edit()
+                                        .putString("last_ovpn_uri",     selectedFileUri.toString())
+                                        .putString("last_ovpn_name",    selectedFileName)
+                                        .putString("last_vpn_user",     vpnUser)
+                                        .putString("last_vpn_pass",     vpnPass)
+                                        .putString("last_app_package",  selectedApp!!.packageName)
+                                        .putString("last_app_name",     selectedApp!!.name)
+                                        .putString("last_seconds",      seconds)
+                                        .apply()
+                                    prepararConexion(selectedFileUri!!, selectedApp!!.packageName, secs, vpnUser, vpnPass)
+                                }
+                            }
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
                     if (isConnecting.value) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("Conectando...", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                color = White,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text("Conectando...", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = White)
+                        }
                     } else {
                         Text(
-                            "Conectar y abrir ${selectedApp?.name ?: ""}",
+                            text = if (selectedApp != null) "Conectar y abrir ${selectedApp!!.name}" else "Conectar",
                             fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = if (canConnect) White else TextMuted
                         )
                     }
                 }
+
+                Spacer(Modifier.height(8.dp))
             }
         }
     }
 
+    // ── Diálogo selector de apps ─────────────────────────────────────────────
+
     @Composable
     fun AppPickerDialog(onDismiss: () -> Unit, onAppSelected: (AppInfo) -> Unit) {
         var searchQuery by remember { mutableStateOf("") }
-        val searchFocus = remember { FocusRequester() }
+        val searchFocus    = remember { FocusRequester() }
         val firstItemFocus = remember { FocusRequester() }
 
         val allApps = remember {
@@ -517,51 +549,71 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        LaunchedEffect(Unit) {
-            delay(150)
-            searchFocus.requestFocus()
-        }
+        LaunchedEffect(Unit) { delay(150); searchFocus.requestFocus() }
 
         Dialog(onDismissRequest = onDismiss) {
             Surface(
-                shape = MaterialTheme.shapes.large,
-                modifier = Modifier.fillMaxWidth().fillMaxHeight(0.85f)
+                shape = RoundedCornerShape(20.dp),
+                color = Surface1,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.85f)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Elegir aplicación",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .width(3.dp)
+                                .height(18.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(BlueVibrant)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "Elegir aplicación",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = White
+                        )
+                    }
+                    Spacer(Modifier.height(16.dp))
 
-                    // Buscador: al presionar ABAJO mueve foco al primer item
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        placeholder = { Text("Buscar app...") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        placeholder = { Text("Buscar app...", color = TextMuted) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = TextMuted) },
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(onSearch = {
-                            // Al presionar Search/Enter en teclado, baja al primer item
                             try { firstItemFocus.requestFocus() } catch (_: Exception) {}
                         }),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor      = BlueVibrant,
+                            unfocusedBorderColor    = Outline,
+                            focusedLabelColor       = BlueVibrant,
+                            unfocusedLabelColor     = TextMuted,
+                            cursorColor             = BlueVibrant,
+                            focusedTextColor        = White,
+                            unfocusedTextColor      = White,
+                            focusedContainerColor   = Surface2,
+                            unfocusedContainerColor = Surface2
+                        ),
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 8.dp)
+                            .padding(bottom = 12.dp)
                             .focusRequester(searchFocus)
                             .onPreviewKeyEvent { event ->
-                                // Interceptamos D-PAD abajo para salir del TextField
                                 if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN &&
                                     event.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
                                     try { firstItemFocus.requestFocus() } catch (_: Exception) {}
-                                    true // consumimos el evento
+                                    true
                                 } else false
                             },
                         singleLine = true
                     )
 
-                    LazyColumn {
+                    androidx.compose.foundation.lazy.LazyColumn {
                         items(filteredApps.size) { index ->
                             val app = filteredApps[index]
                             var isFocused by remember { mutableStateOf(false) }
@@ -571,28 +623,28 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .then(
-                                        // Solo el primer item recibe el FocusRequester nombrado
                                         if (index == 0) Modifier.focusRequester(firstItemFocus)
                                         else Modifier
                                     )
                                     .onFocusChanged { isFocused = it.isFocused }
                                     .focusRequester(itemFocus)
                                     .focusable()
+                                    .clip(RoundedCornerShape(8.dp))
                                     .background(
-                                        if (isFocused) MaterialTheme.colorScheme.primaryContainer
-                                        else Color.Transparent
+                                        if (isFocused)
+                                            Brush.linearGradient(
+                                                listOf(BlueDeep, BlueVibrant.copy(alpha = 0.35f))
+                                            )
+                                        else
+                                            Brush.linearGradient(listOf(Color.Transparent, Color.Transparent))
                                     )
                                     .onPreviewKeyEvent { event ->
                                         if (event.nativeKeyEvent.action == android.view.KeyEvent.ACTION_DOWN) {
                                             when (event.nativeKeyEvent.keyCode) {
                                                 android.view.KeyEvent.KEYCODE_DPAD_CENTER,
                                                 android.view.KeyEvent.KEYCODE_ENTER,
-                                                android.view.KeyEvent.KEYCODE_BUTTON_A -> {
-                                                    onAppSelected(app)
-                                                    true
-                                                }
+                                                android.view.KeyEvent.KEYCODE_BUTTON_A -> { onAppSelected(app); true }
                                                 android.view.KeyEvent.KEYCODE_DPAD_UP -> {
-                                                    // Si es el primero, volvemos al buscador
                                                     if (index == 0) {
                                                         try { searchFocus.requestFocus() } catch (_: Exception) {}
                                                         true
@@ -603,32 +655,38 @@ class MainActivity : ComponentActivity() {
                                         } else false
                                     }
                                     .clickable { onAppSelected(app) }
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    .padding(horizontal = 12.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = app.name,
                                         fontWeight = if (isFocused) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isFocused)
-                                            MaterialTheme.colorScheme.onPrimaryContainer
-                                        else
-                                            MaterialTheme.colorScheme.onSurface
+                                        color = if (isFocused) BlueLuminous else White
                                     )
                                     Text(
                                         text = app.packageName,
                                         fontSize = 12.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = TextMuted
                                     )
                                 }
                             }
-                            HorizontalDivider()
+
+                            if (index < filteredApps.size - 1) {
+                                HorizontalDivider(
+                                    color = Outline,
+                                    thickness = 0.5.dp,
+                                    modifier = Modifier.padding(horizontal = 12.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
         }
     }
+
+    // ── Lógica VPN ──────────────────────────────────────────────────────────
 
     private fun prepararConexion(uri: Uri, pkg: String, secs: Long, user: String, pass: String) {
         pendingUri = uri
@@ -663,16 +721,9 @@ class MainActivity : ComponentActivity() {
         segundosPendientes = seconds
 
         val conexionExitosa = conectarVPN(uri, user, pass)
+        if (!conexionExitosa) { isConnecting.value = false; return }
 
-        if (!conexionExitosa) {
-            isConnecting.value = false
-            return
-        }
-
-        try {
-            de.blinkt.openvpn.core.VpnStatus.removeStateListener(vpnListener)
-        } catch (_: Exception) {}
-
+        try { de.blinkt.openvpn.core.VpnStatus.removeStateListener(vpnListener) } catch (_: Exception) {}
         de.blinkt.openvpn.core.VpnStatus.addStateListener(vpnListener)
         toast("Iniciando VPN...")
     }
