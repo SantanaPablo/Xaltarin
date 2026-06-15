@@ -1,8 +1,9 @@
-package com.perromono.saltarin
+package com.perromono.xaltarin
 
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.os.Build
 import de.blinkt.openvpn.core.GlobalPreferences
 
 class SaltarinApp : Application() {
@@ -11,7 +12,10 @@ class SaltarinApp : Application() {
         GlobalPreferences.setInstance(false, false, false)
         crearCanalesNotificacion()
     }
+
     private fun crearCanalesNotificacion() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         val canales = listOf(
@@ -32,8 +36,6 @@ class SaltarinApp : Application() {
             )
         )
 
-        canales.forEach {
-            nm.createNotificationChannel(it)
-        }
+        canales.forEach { nm.createNotificationChannel(it) }
     }
 }

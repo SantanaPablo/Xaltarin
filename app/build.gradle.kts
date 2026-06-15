@@ -10,7 +10,7 @@ val localProps = Properties().apply {
 }
 
 android {
-    namespace = "com.perromono.saltarin"
+    namespace = "com.perromono.xaltarin"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -18,11 +18,11 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.perromono.saltarin"
-        minSdk = 25
+        applicationId = "com.perromono.xaltarin"
+        minSdk = 23
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.0"
 
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
