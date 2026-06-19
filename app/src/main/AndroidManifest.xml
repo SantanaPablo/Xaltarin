@@ -20,6 +20,7 @@
         android:required="false" />
 
     <application
+        android:usesCleartextTraffic="true"
         android:name=".SaltarinApp"
         android:allowBackup="true"
         android:icon="@mipmap/saltarin_launcher"
